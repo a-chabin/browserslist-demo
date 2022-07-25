@@ -44,8 +44,14 @@ async function getBrowsers(query = DEFAULT_QUERY, region = GLOBAL_REGION, isExte
     }
 
     let browsersGroups = {};
+    let addedBrowsers = [];
 
     const addVersion = async (browser, inQuery) => {
+      if (addedBrowsers.includes(browser)) {
+        return;
+      }
+
+      addedBrowsers.push(browser);
       let [id, version] = browser.split(' ')
       let coverage = region === GLOBAL_REGION
         ? getGlobalCoverage(id, version)
@@ -57,9 +63,11 @@ async function getBrowsers(query = DEFAULT_QUERY, region = GLOBAL_REGION, isExte
         coverage: round(coverage)
       };
 
-      !browsersGroups[id]
-        ? browsersGroups[id] = { versions: [versionData] }
-        : browsersGroups[id].versions.push(versionData)
+      if (!browsersGroups[id]) {
+        browsersGroups[id] = { versions: [versionData] }
+      } else {
+        browsersGroups[id].versions.push(versionData)
+      }
     };
 
     for (let browser of browsersByQuery) {
