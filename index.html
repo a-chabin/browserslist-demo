@@ -2,20 +2,69 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browsersl.ist DEMO</title>
+    <link rel="stylesheet" href="./colors.css">
+    <link rel="stylesheet" href="./index.css">
+    <meta name="color-scheme" content="dark light">
 </head>
 
 <body>
-    <input type="text" value=">5%" id="browsers-input">
-    <div id="browsers-input-errors"></div>
-    <div id="browsers-root"></div>
+    <article class="Article Article--left">
+        <h1>Browserslist</h1>
+        <p class="Introduction"> Shared browser and platform compatibility config for popular JavaScript tools,
+            including
+            Autoprefixer, Babel, ESLint, PostCSS, and Webpack</p>
+        <p class="Supported"> Supported by <a href="">Evil Martians</a> and
+            <a href="">Cube</a>
+        </p>
+        <h2>How to get started</h2>
+        <p>
+            <code>defaults</code> - if you're building a web application for the global audience.
+        </p>
+        <p>
+            <code>node 18</code> - if you're building a Node.js application, e.g., for SSR.
+        </p>
+        <p><a href="">Autoprefixer</a> Autoprefixer ,
+            <a href="">Babel</a> or any of the following libraries will find target browsers automatically, when you add
+            the
+            following to
+            <b>package.json</b>:
+        </p>
+        <pre class="Pre">
+      <code>"browserslist": [</code>
+      <code>  "defaults",</code>
+      <code>  "not IE 11",</code>
+      <code>  "maintained node versions"</code>
+      <code>]</code>
+    </pre>
+        <p>You can also check publicly Browserslist configs on <a href="">GitHub</a></p>
 
+        <h2>Query Syntax</h2>
+        <p> You can specify the browser and Node.js versions by queries (case insensitive):</p>
+        <ul></ul>
+        <li>
+            <p><code>defaults</code>: Browserslist's default browsers</p>
+            <p><code>> 0.5%</code> , last 2 versions, Firefox ESR, not dead</p>
+        </li>
+        <li>
+            <p>By usage statistics</p>
+            <p>
+                <code>> 5%</code>: browsers versions selected by global usage statistics.
+            </p>
+        </li>
 
-    <link rel="stylesheet" href="./style.css">
-    <script src="./script.js"></script>
+    </article>
+    <article class="Article Article--right">
+        <h2>Display compatible browsers</h2>
+        <form>
+            <textarea name="query" cols="30" rows="5" class="QueryTextArea"
+                placeholder="Write the Browserslist config here..." style="border: 1px solid black"></textarea>
+        </form>
+        <h2>Global coverage: <span id="global-coverage"></span></h2>
+        <ul role="presentation" id="global-coverage-bar" class="GlobalCoverageBar"></ul>
+        <div id="browsers-stats" class="BrowsersStat"></div>
+    </article>
+
+    <script src="./index.js"></script>
 </body>
 
 </html>
