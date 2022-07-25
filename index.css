@@ -159,16 +159,15 @@ p code {
   counter-increment: alpha -1;
   background-color: var(--accent-alternave);
   opacity: var(--a, 0%);
+  padding: 0px 5px;
 
   --p: 0;
   --a: 0;
 }
 
 .GlobalCoverageBar__item::before {
-  --n: "";
-
   display: block;
-  content: var(--n, "");
+  content: attr(data-browser-name);
 }
 
 .BrowsersStat {

@@ -26,6 +26,7 @@ async function sendQuery(query) {
 
 function updateGlobalCoverageBar(data) {
   const element = document.getElementById('global-coverage-bar');
+  element.innerHTML = '';
   data.browsers.forEach((item) => {
     const alpha = 1 - 1/(item.coverage);
     const itemElem = document.createElement('li');
@@ -33,8 +34,9 @@ function updateGlobalCoverageBar(data) {
     itemElem.setAttribute('style', `
     --p: ${item.coverage};
     --a: ${alpha};
-    --n: '${item.coverage > 10 ? item.name : ''}';
     `)
+
+    itemElem.dataset.browserName = item.coverage > 10 ? item.name : '';
     element.appendChild(itemElem);
   })
 }
