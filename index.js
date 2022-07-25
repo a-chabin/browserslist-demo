@@ -9,6 +9,8 @@ queryInput.addEventListener('input', () => {
   }
 })
 
+sendQuery('defaults')
+
 async function sendQuery(query) {
   const isExtended = new URLSearchParams(window.location.search).get('extended') || 'false';
   let response = await fetch(`/api/browserslist/?q=${encodeURIComponent(query)}&extended=${isExtended}`)
