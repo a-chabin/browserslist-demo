@@ -1,27 +1,10 @@
-
-@media (prefers-color-scheme: light) {
-    :root {
-        --main-bg: rgb(255, 255, 255);
-        --bg-highlited: rgb(245, 245, 247);
-        --accent: rgb(5, 114, 233);
-        --text-highlited: rgba(14, 101, 216, .07);
-        --text-primary: rgb(0, 8, 0);
-        --text-secondary: rgb(124, 129, 134);
-        --accent-blue-primary: rgb(75, 0, 231);
-        --accent-alternave: rgb(255, 211, 0)
-    }
-  }
-  
-  @media (prefers-color-scheme: dark) {
-    :root {
-        --main-bg: rgb(0, 0, 0);
-        --bg-highlited: rgb(0, 0, 0);
-        --accent: rgb(0, 69, 185);
-        --text-highlited: rgba(0, 82, 195, .07);
-        --text-primary: rgb(0, 8, 0);
-        --text-secondary: rgb(124, 129, 134);
-        --accent-blue-primary: rgb(75, 0, 231);
-        --accent-alternave: rgb(255, 211, 0)
-    }
-  }
-  
+:root {
+    --main-bg: rgb(255, 255, 255);
+    --bg-highlited: rgb(245, 245, 247);
+    --accent: rgb(5, 114, 233);
+    --text-highlited: rgba(14, 101, 216, .07);
+    --text-primary: rgb(0, 8, 0);
+    --text-secondary: rgb(124, 129, 134);
+    --accent-blue-primary: rgb(75, 0, 231);
+    --accent-alternave: rgb(255, 211, 0)
+}
