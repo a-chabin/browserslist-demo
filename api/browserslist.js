@@ -9,10 +9,11 @@ const GLOBAL_REGION = 'Global'
 
 async function handler(req, res) {
   let query = req.query.q
+  let isExtended = JSON.parse(req.query.extended);
   let region = extractRegionFromQuery(query)
 
   try {
-    res.status(200).json(await getBrowsers(query, region))
+    res.status(200).json(await getBrowsers(query, region, isExtended))
   } catch (e) {
     res.status(400).json({ error: e.message })
   }
@@ -23,17 +24,18 @@ function extractRegionFromQuery(query) {
   return queryHasIn ? queryHasIn[1] : undefined
 }
 
-async function getBrowsers(query = DEFAULT_QUERY, region = GLOBAL_REGION) {
+async function getBrowsers(query = DEFAULT_QUERY, region = GLOBAL_REGION, isExtended = false) {
   const loadBrowsersData = async (resolve, reject) => {
     let browsersByDefaultQuery = []
     let browsersByQuery = []
 
     try {
       let queryWithoutQuotes = query.replace(/'/g, '')
-      browsersByDefaultQuery = browserslist()
+      browsersByDefaultQuery = isExtended ? query === DEFAULT_QUERY ? [] : browserslist() : []
+
       browsersByQuery = query !== DEFAULT_QUERY
         ? browserslist(queryWithoutQuotes)
-        : []
+        : browserslist()
 
     } catch (e) {
       if (e.browserslist) {
