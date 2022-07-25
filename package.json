@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "browserslist": "^4.21.2",
+    "caniuse-lite": "^1.0.30001370",
+    "node-fetch": "^3.2.6"
+  }
+}
