@@ -1,132 +1,116 @@
 const browserslist = require('browserslist')
-const { agents: caniuseAgents, region: caniuseUnpackRegion } = require('caniuse-lite')
 const { version: bv } = require('browserslist/package.json')
 const { version: cv } = require('caniuse-lite/package.json')
-const wikipediaLinks = require('./data/wikipedia-links.json')
+const { agents: caniuseAgents, region: caniuseRegion } = require('caniuse-lite')
 
 const DEFAULT_QUERY = 'defaults'
 const GLOBAL_REGION = 'Global'
 
 async function handler(req, res) {
   let query = req.query.q
-  let isExtended = JSON.parse(req.query.extended);
-  let region = extractRegionFromQuery(query)
 
   try {
-    res.status(200).json(await getBrowsers(query, region, isExtended))
+    res.status(200).json(await getBrowsers(query))
   } catch (e) {
     res.status(400).json({ error: e.message })
   }
 }
 
-function extractRegionFromQuery(query) {
-  let queryHasIn = query.match(/ in ((?:alt-)?[A-Za-z]{2})(?:,|$)/)
-  return queryHasIn ? queryHasIn[1] : undefined
-}
+async function getBrowsers(query = DEFAULT_QUERY) {
+  let region = parseRegionFromQuery(query) || GLOBAL_REGION
 
-async function getBrowsers(query = DEFAULT_QUERY, region = GLOBAL_REGION, isExtended = false) {
-  const loadBrowsersData = async (resolve, reject) => {
-    let browsersByDefaultQuery = []
+  // TODO Add support `Node > 0` query
+  let loadBrowsersData = async (resolve, reject) => {
     let browsersByQuery = []
 
     try {
-      let queryWithoutQuotes = query.replace(/'/g, '')
-      browsersByDefaultQuery = isExtended ? query === DEFAULT_QUERY ? [] : browserslist() : []
-
-      browsersByQuery = query !== DEFAULT_QUERY
-        ? browserslist(queryWithoutQuotes)
-        : browserslist()
-
-    } catch (e) {
-      if (e.browserslist) {
-        reject(e.message)
-      }
+      browsersByQuery = browserslist(query)
+    } catch (error) {
+      reject(
+        error.browserslist
+          ? error.message
+          : `Unknown browser query \`${query}\`.`
+      )
+      return
     }
 
-    let browsersGroups = {};
-    let addedBrowsers = [];
-
-    const addVersion = async (browser, inQuery) => {
-      if (addedBrowsers.includes(browser)) {
-        return;
-      }
-
-      addedBrowsers.push(browser);
-      let [id, version] = browser.split(' ')
-      let coverage = region === GLOBAL_REGION
-        ? getGlobalCoverage(id, version)
-        : await getRegionCoverage(id, version, region);
-
-      const versionData = {
-        v: version,
-        inQuery,
-        coverage: round(coverage)
-      };
-
-      if (!browsersGroups[id]) {
-        browsersGroups[id] = { versions: [versionData] }
-      } else {
-        browsersGroups[id].versions.push(versionData)
-      }
-    };
+    let browsersGroups = {}
+    let browsersGroupsKeys = []
 
     for (let browser of browsersByQuery) {
-      await addVersion(browser, true);
-    }
-
-    for (let browser of browsersByDefaultQuery) {
-      await addVersion(browser, false);
-    }
-
-    const sortByCoverage = (a, b) => a.coverage > b.coverage
-      ? -1
-      : a.coverage < b.coverage
-        ? 1
-        : 0;
-
-    const browsers = Object.entries(browsersGroups).map(([id, data]) => {
-      let { browser: name, usage_global: usageGlobal } = caniuseAgents[id];
-      // TODO Add regional coverage
-      let coverage = round(Object.values(usageGlobal).reduce((a, b) => a + b, 0))
-      let wiki = wikipediaLinks[id]
-      let versions = data.versions.sort(sortByCoverage)
-
-      return {
-        id,
-        name,
-        wiki,
-        coverage,
-        versions
+      if (browsersGroupsKeys.includes(browser)) {
+        return
       }
-    }).sort(sortByCoverage);
+
+      browsersGroupsKeys.push(browser)
+      let [id, version] = browser.split(' ')
+      let versionCoverage =
+        region === GLOBAL_REGION
+          ? getGlobalCoverage(id, version)
+          : await getRegionCoverage(id, version, region)
+
+      let versionData = { [`${version}`]: roundNumber(versionCoverage) }
+
+      if (!browsersGroups[id]) {
+        browsersGroups[id] = { versions: versionData }
+      } else {
+        Object.assign(browsersGroups[id].versions, versionData)
+      }
+    }
+
+    let browsers = Object.entries(browsersGroups)
+      .map(([id, { versions }]) => {
+        let { browser: name, usage_global: usageGlobal } = caniuseAgents[id]
+        // TODO Add regional coverage
+        let coverage = roundNumber(
+          Object.values(usageGlobal).reduce((a, b) => a + b, 0)
+        )
+
+        return {
+          id,
+          name,
+          coverage,
+          versions
+        }
+      })
+      .sort((a, b) => b.coverage - a.coverage)
 
     resolve({
       query,
       region,
       coverage: browserslist.coverage(browsersByQuery, region),
-      bv,
-      cv,
+      versions: {
+        browserslist: bv,
+        caniuse: cv
+      },
       browsers
     })
-  };
+  }
 
-  return new Promise(loadBrowsersData);
+  return new Promise(loadBrowsersData)
 }
 
-function round(value) {
-  return Math.round(value * 100) / 100;
+function parseRegionFromQuery(query) {
+  let queryParsed = browserslist.parse(query)
+  // TODO Take the most frequent region in large queries?
+  let firstQueryRegion = queryParsed.find(x => x.place)
+  return firstQueryRegion ? firstQueryRegion.place : null
 }
 
 function getGlobalCoverage(id, version) {
-  return getCoverage(caniuseAgents[id].usage_global, version);
+  return getCoverage(caniuseAgents[id].usage_global, version)
 }
 
-// TODO Show region not found if not exists 
 async function getRegionCoverage(id, version, region) {
-  const { default: regionData } = await import(
-    `caniuse-lite/data/regions/${region}.js`
-  )
-  return getCoverage(caniuseUnpackRegion(regionData)[id], version)
+  try {
+    const { default: regionData } = await import(
+      `caniuse-lite/data/regions/${region}.js`
+    )
+    return getCoverage(caniuseRegion(regionData)[id], version)
+  } catch (e) {
+    console.log(e);
+    throw new Error(`Unknown region name \`${region}\`.`)
+  }
 }
 
 function getCoverage(data, version) {
@@ -134,6 +118,10 @@ function getCoverage(data, version) {
 
   // If specific version coverage is missing, fall back to 'version zero'
   return data[version] !== undefined ? data[version] : data[lastVersion]
+}
+
+function roundNumber(value) {
+  return Math.round(value * 100) / 100
 }
 
 module.exports = handler
